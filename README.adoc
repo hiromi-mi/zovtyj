@@ -1,0 +1,12 @@
+Zovtyj Mastodon History Viewer and Client
+=========================================
+
+Zovtyj is an mastodon history viewer.
+
+= How to use =
+```
+$ ./zovtyj -register -server https://mstdn.jp
+$ CLIENTID="hoge" CLIENTSECRET="bar" ACCESSTOKEN="foo" ./zovtyj --server https://mstdn.jp --userid fuga
+```
+
+will get toot of User ID. fuga
