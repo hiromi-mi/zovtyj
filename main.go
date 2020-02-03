@@ -60,7 +60,7 @@ func doRegister(serverName string) *mastodon.Application {
 }
 
 func main() {
-	register := flag.Bool("register", false, "To Register")
+	register := flag.Bool("register", false, "Register New ID")
 	serverURL := flag.String("server", "https://mstdn.jp", "Server URL")
 	initID := flag.String("initid", "", "Initial ID")
 	userID := flag.String("userid", "1", "User ID")
@@ -78,7 +78,7 @@ func main() {
 	})
 
 	var InitialID = mastodon.ID(*initID)
-	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	location, err := time.LoadLocation("Local")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +93,11 @@ func main() {
 			log.Fatal(err)
 		}
 		for i := 0; i < len(statuses); i++ {
-			fmt.Println(string(statuses[i].ID) + " " + statuses[i].CreatedAt.In(tokyo).Format("2006-01-02 15:04:05") + " " + statuses[i].Content)
+			fmt.Println(string(statuses[i].ID) + " " + statuses[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + statuses[i].Content)
+		}
+		if len(statuses) <= 0 {
+			// Exit toot
+			break
 		}
 		InitialID = statuses[len(statuses)-1].ID
 		time.Sleep(time.Millisecond * 1200)
