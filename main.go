@@ -61,9 +61,9 @@ func doRegister(serverName string) *mastodon.Application {
 
 func main() {
 	register := flag.Bool("register", false, "Register New ID")
-	serverURL := flag.String("server", "https://mstdn.jp", "Server URL")
+	serverURL := flag.String("server", "", "Server URL")
 	initID := flag.String("initid", "", "Initial ID")
-	userID := flag.String("userid", "1", "User ID")
+	userID := flag.String("userid", "", "User ID")
 	flag.Parse()
 	if *register {
 		doRegister(*serverURL)

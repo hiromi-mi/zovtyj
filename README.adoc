@@ -9,4 +9,4 @@ $ ./zovtyj -register -server https://mstdn.jp
 $ CLIENTID="hoge" CLIENTSECRET="bar" ACCESSTOKEN="foo" ./zovtyj --server https://mstdn.jp --userid fuga
 ```
 
-will get toot of User ID. fuga
+will get historical toots of User ID: fuga
