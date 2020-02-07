@@ -17,12 +17,16 @@
 package main
 
 import (
+	//"bytes"
 	"context"
 	"flag"
 	"fmt"
 	"github.com/mattn/go-mastodon"
+	"golang.org/x/net/html"
+	//"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -87,6 +91,40 @@ func dohistory(c *mastodon.Client, userID string, initID string) {
 	}
 }
 
+func readHtml(content string) string {
+	doc, err := html.Parse(strings.NewReader(content))
+	var b strings.Builder
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: Input should be UTF-8 encoded
+	var crawler func(*html.Node)
+	crawler = func(node *html.Node) {
+		// node.Data : type
+		if node.Type == html.ElementNode && node.Data == "p" {
+			for _, a := range node.Attr {
+				switch a.Key {
+				case "href":
+					b.WriteString(a.Val)
+					b.WriteString(" ")
+				case "br":
+					b.WriteString("; ")
+				}
+			}
+		}
+		if node.Type == html.TextNode {
+			b.WriteString(node.Data)
+		}
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			crawler(c)
+		}
+	}
+
+	crawler(doc)
+	return b.String()
+}
+
 func main() {
 	register := flag.Bool("register", false, "Register New ID")
 	history := flag.Bool("history", false, "Show History")
@@ -119,7 +157,7 @@ func main() {
 	}
 	location, err := time.LoadLocation("Local")
 	for i := 0; i < len(timeline); i++ {
-		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + timeline[i].Content + " @" + timeline[i].Account.Username)
+		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + readHtml(timeline[i].Content) + "@" + timeline[i].Account.Username)
 	}
 
 	notifications, err := c.GetNotifications(context.Background(), &mastodon.Pagination{
@@ -131,7 +169,7 @@ func main() {
 	}
 	for i := 0; i < len(notifications); i++ {
 		if notifications[i].Status != nil {
-			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username + " " + notifications[i].Status.Content)
+			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username + " " + readHtml(notifications[i].Status.Content))
 		} else {
 			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username)
 		}
