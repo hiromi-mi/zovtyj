@@ -59,32 +59,15 @@ func doRegister(serverName string) *mastodon.Application {
 	return app
 }
 
-func main() {
-	register := flag.Bool("register", false, "Register New ID")
-	serverURL := flag.String("server", "", "Server URL")
-	initID := flag.String("initid", "", "Initial ID")
-	userID := flag.String("userid", "", "User ID")
-	flag.Parse()
-	if *register {
-		doRegister(*serverURL)
-		return
-	}
-
-	c := mastodon.NewClient(&mastodon.Config{
-		Server:       *serverURL,
-		ClientID:     os.Getenv("CLIENTID"),
-		ClientSecret: os.Getenv("CLIENTSECRET"),
-		AccessToken:  os.Getenv("ACCESSTOKEN"),
-	})
-
-	var InitialID = mastodon.ID(*initID)
+func dohistory(c *mastodon.Client, userID string, initID string) {
+	var InitialID = mastodon.ID(initID)
 	location, err := time.LoadLocation("Local")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for {
-		statuses, err := c.GetAccountStatuses(context.Background(), mastodon.ID(*userID), &mastodon.Pagination{
+		statuses, err := c.GetAccountStatuses(context.Background(), mastodon.ID(userID), &mastodon.Pagination{
 			MaxID: InitialID,
 			Limit: 50,
 		})
@@ -101,5 +84,56 @@ func main() {
 		}
 		InitialID = statuses[len(statuses)-1].ID
 		time.Sleep(time.Millisecond * 1200)
+	}
+}
+
+func main() {
+	register := flag.Bool("register", false, "Register New ID")
+	history := flag.Bool("history", false, "Show History")
+	serverURL := flag.String("server", "", "Server URL")
+	initID := flag.String("initid", "", "Initial ID")
+	userID := flag.String("userid", "", "User ID")
+	flag.Parse()
+	if *register {
+		doRegister(*serverURL)
+		return
+	}
+
+	c := mastodon.NewClient(&mastodon.Config{
+		Server:       *serverURL,
+		ClientID:     os.Getenv("CLIENTID"),
+		ClientSecret: os.Getenv("CLIENTSECRET"),
+		AccessToken:  os.Getenv("ACCESSTOKEN"),
+	})
+
+	if *history {
+		dohistory(c, *userID, *initID)
+	}
+
+	timeline, err := c.GetTimelineHome(context.Background(), &mastodon.Pagination{
+		MaxID: "",
+		Limit: 50,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	location, err := time.LoadLocation("Local")
+	for i := 0; i < len(timeline); i++ {
+		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + timeline[i].Content + " @" + timeline[i].Account.Username)
+	}
+
+	notifications, err := c.GetNotifications(context.Background(), &mastodon.Pagination{
+		MaxID: "",
+		Limit: 10,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for i := 0; i < len(notifications); i++ {
+		if notifications[i].Status != nil {
+			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username + " " + notifications[i].Status.Content)
+		} else {
+			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username)
+		}
 	}
 }
