@@ -156,8 +156,13 @@ func main() {
 		log.Fatal(err)
 	}
 	location, err := time.LoadLocation("Local")
+	var opts string
 	for i := 0; i < len(timeline); i++ {
-		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + readHtml(timeline[i].Content) + "@" + timeline[i].Account.Username)
+		opts = ""
+		if timeline[i].Reblog != nil {
+			opts += " from " + timeline[i].Reblog.Account.Username + ": "
+		}
+		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + opts + " " + readHtml(timeline[i].Content) + "@" + timeline[i].Account.Username)
 	}
 
 	notifications, err := c.GetNotifications(context.Background(), &mastodon.Pagination{
