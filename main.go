@@ -17,6 +17,7 @@
 package main
 
 import (
+	"bufio"
 	//"bytes"
 	"context"
 	"flag"
@@ -125,29 +126,7 @@ func readHtml(content string) string {
 	return b.String()
 }
 
-func main() {
-	register := flag.Bool("register", false, "Register New ID")
-	history := flag.Bool("history", false, "Show History")
-	serverURL := flag.String("server", "", "Server URL")
-	initID := flag.String("initid", "", "Initial ID")
-	userID := flag.String("userid", "", "User ID")
-	flag.Parse()
-	if *register {
-		doRegister(*serverURL)
-		return
-	}
-
-	c := mastodon.NewClient(&mastodon.Config{
-		Server:       *serverURL,
-		ClientID:     os.Getenv("CLIENTID"),
-		ClientSecret: os.Getenv("CLIENTSECRET"),
-		AccessToken:  os.Getenv("ACCESSTOKEN"),
-	})
-
-	if *history {
-		dohistory(c, *userID, *initID)
-	}
-
+func doHomeTimeline(c *mastodon.Client) {
 	timeline, err := c.GetTimelineHome(context.Background(), &mastodon.Pagination{
 		MaxID: "",
 		Limit: 50,
@@ -179,4 +158,55 @@ func main() {
 			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username)
 		}
 	}
+}
+
+func dotoot(c *mastodon.Client) {
+	scanner := bufio.NewScanner(os.Stdin)
+	var toot string
+	for scanner.Scan() {
+		toot += scanner.Text()
+		toot += "\n"
+	}
+	_, err := c.PostStatus(context.Background(), &mastodon.Toot{
+		Status:     toot,
+		Visibility: mastodon.VisibilityFollowersOnly,
+		Sensitive:  false,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	register := flag.Bool("register", false, "Register New ID")
+	history := flag.Bool("history", false, "Show History")
+	toot := flag.Bool("toot", false, "Toot")
+	serverURL := flag.String("server", "", "Server URL")
+	initID := flag.String("initid", "", "Initial ID")
+	userID := flag.String("userid", "", "User ID")
+
+	flag.Parse()
+	if *register {
+		doRegister(*serverURL)
+		return
+	}
+
+	c := mastodon.NewClient(&mastodon.Config{
+		Server:       *serverURL,
+		ClientID:     os.Getenv("CLIENTID"),
+		ClientSecret: os.Getenv("CLIENTSECRET"),
+		AccessToken:  os.Getenv("ACCESSTOKEN"),
+	})
+
+	if *history {
+		dohistory(c, *userID, *initID)
+		return
+	}
+
+	if *toot {
+		dotoot(c)
+		return
+	}
+
+	doHomeTimeline(c)
 }

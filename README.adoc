@@ -10,3 +10,7 @@ $ CLIENTID="hoge" CLIENTSECRET="bar" ACCESSTOKEN="foo" ./zovtyj --server https:/
 ```
 
 will get historical toots of User ID: fuga
+
+```
+$ echo "toot" | ./zovtyj -toot
+```
