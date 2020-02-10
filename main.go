@@ -18,13 +18,11 @@ package main
 
 import (
 	"bufio"
-	//"bytes"
 	"context"
 	"flag"
 	"fmt"
 	"github.com/mattn/go-mastodon"
 	"golang.org/x/net/html"
-	//"io"
 	"log"
 	"os"
 	"strings"
@@ -32,11 +30,12 @@ import (
 )
 
 func doRegister(serverName string) *mastodon.Application {
+	const redirectURI = "urn:ietf:wg:oauth:2.0:oob"
 	app, err := mastodon.RegisterApp(context.Background(), &mastodon.AppConfig{
 		Server:       serverName,
 		ClientName:   "zovtyj",
 		Scopes:       "read write",
-		RedirectURIs: "urn:ietf:wg:oauth:2.0:oob",
+		RedirectURIs: redirectURI,
 		Website:      "https://github.com/hiromi-mi/zovtyj",
 	})
 	if err != nil {
@@ -56,7 +55,7 @@ func doRegister(serverName string) *mastodon.Application {
 		ClientSecret: app.ClientSecret,
 	})
 
-	err = c.AuthenticateToken(context.Background(), authCode, "urn:ietf:wg:oauth:2.0:oob")
+	err = c.AuthenticateToken(context.Background(), authCode, redirectURI)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,7 +75,7 @@ func dohistory(c *mastodon.Client, userID string, initID string) {
 			MaxID: InitialID,
 			Limit: 50,
 		})
-		//timeline, err := c.GetTimelineHome(context.Background(), nil)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -105,12 +104,11 @@ func readHtml(content string) string {
 		// node.Data : type
 		if node.Type == html.ElementNode && node.Data == "p" {
 			for _, a := range node.Attr {
+				b.WriteString(a.Key)
 				switch a.Key {
 				case "href":
 					b.WriteString(a.Val)
 					b.WriteString(" ")
-				case "br":
-					b.WriteString("; ")
 				}
 			}
 		}
