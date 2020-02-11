@@ -176,17 +176,34 @@ func dotoot(c *mastodon.Client) {
 }
 
 func main() {
-	register := flag.Bool("register", false, "Register New ID")
-	history := flag.Bool("history", false, "Show History")
-	toot := flag.Bool("toot", false, "Toot")
 	serverURL := flag.String("server", "", "Server URL")
-	initID := flag.String("initid", "", "Initial ID")
-	userID := flag.String("userid", "", "User ID")
 
+	historyCmd := flag.NewFlagSet("history", flag.ContinueOnError)
+	initID := historyCmd.String("initid", "", "Initial ID")
+	userID := historyCmd.String("userid", "", "User ID")
+
+	flag.Usage = func() {
+		fmt.Fprintln(historyCmd.Output(), "Usage: zovtyj [global args] <command> [command args]")
+		fmt.Fprintln(historyCmd.Output(), "global args:")
+		flag.PrintDefaults()
+		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot")
+		fmt.Fprintln(historyCmd.Output(), "command args of history:")
+		historyCmd.PrintDefaults()
+	}
+
+	/* Parse Common Arguments */
 	flag.Parse()
-	if *register {
+
+	if flag.NArg() == 0 {
+		flag.Usage()
+		os.Exit(-1)
+	}
+
+	remainingArgs := flag.Args()
+
+	if remainingArgs[0] == "register" {
 		doRegister(*serverURL)
-		return
+		os.Exit(-1)
 	}
 
 	c := mastodon.NewClient(&mastodon.Config{
@@ -196,15 +213,15 @@ func main() {
 		AccessToken:  os.Getenv("ACCESSTOKEN"),
 	})
 
-	if *history {
+	switch remainingArgs[0] {
+	case "history":
+		historyCmd.Parse(remainingArgs[1:])
 		dohistory(c, *userID, *initID)
-		return
-	}
-
-	if *toot {
+	case "toot":
 		dotoot(c)
-		return
+	case "home":
+		doHomeTimeline(c)
+	default:
+		log.Fatal("Please use cmd: " + flag.Args()[0])
 	}
-
-	doHomeTimeline(c)
 }

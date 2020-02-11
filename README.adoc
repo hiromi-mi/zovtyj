@@ -5,14 +5,14 @@ Zovtyj is an mastodon history viewer.
 
 = How to use =
 ```
-$ ./zovtyj -register -server https://mstdn.jp
-$ CLIENTID="hoge" CLIENTSECRET="bar" ACCESSTOKEN="foo" ./zovtyj --server https://mstdn.jp --userid fuga
+$ ./zovtyj -server https://mstdn.jp register
+$ CLIENTID="hoge" CLIENTSECRET="bar" ACCESSTOKEN="foo" ./zovtyj --server https://mstdn.jp history --userid fuga
 ```
 
 will get historical toots of User ID: fuga
 
 ```
-$ echo "toot" | ./zovtyj -toot
+$ echo "toot" | ./zovtyj toot
 ```
 = Dependencies =
 
