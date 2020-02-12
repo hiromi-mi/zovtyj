@@ -175,6 +175,13 @@ func dotoot(c *mastodon.Client) {
 	}
 }
 
+func dodelete(c *mastodon.Client, id mastodon.ID) {
+	err := c.DeleteStatus(context.Background(), id)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	serverURL := flag.String("server", "", "Server URL")
 
@@ -182,13 +189,18 @@ func main() {
 	initID := historyCmd.String("initid", "", "Initial ID")
 	userID := historyCmd.String("userid", "", "User ID")
 
+	deleteCmd := flag.NewFlagSet("delete", flag.ContinueOnError)
+	deleteID := deleteCmd.String("deleteid", "", "Status to delete")
+
 	flag.Usage = func() {
 		fmt.Fprintln(historyCmd.Output(), "Usage: zovtyj [global args] <command> [command args]")
 		fmt.Fprintln(historyCmd.Output(), "global args:")
 		flag.PrintDefaults()
-		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot")
+		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete")
 		fmt.Fprintln(historyCmd.Output(), "command args of history:")
 		historyCmd.PrintDefaults()
+		fmt.Fprintln(historyCmd.Output(), "command args of delete:")
+		deleteCmd.PrintDefaults()
 	}
 
 	/* Parse Common Arguments */
@@ -221,6 +233,9 @@ func main() {
 		dotoot(c)
 	case "home":
 		doHomeTimeline(c)
+	case "delete":
+		deleteCmd.Parse(remainingArgs[1:])
+		dodelete(c, mastodon.ID(*deleteID))
 	default:
 		log.Fatal("Please use cmd: " + flag.Args()[0])
 	}
