@@ -139,7 +139,7 @@ func doHomeTimeline(c *mastodon.Client) {
 		if timeline[i].Reblog != nil {
 			opts += " from " + timeline[i].Reblog.Account.Username + ": "
 		}
-		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + opts + " " + readHtml(timeline[i].Content) + "@" + timeline[i].Account.Username)
+		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + opts + " " + readHtml(timeline[i].Content) + " @" + timeline[i].Account.Username)
 	}
 
 	notifications, err := c.GetNotifications(context.Background(), &mastodon.Pagination{
@@ -151,14 +151,14 @@ func doHomeTimeline(c *mastodon.Client) {
 	}
 	for i := 0; i < len(notifications); i++ {
 		if notifications[i].Status != nil {
-			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username + " " + readHtml(notifications[i].Status.Content))
+			fmt.Println(notifications[i].Type + "@" + notifications[i].Account.Username + " " + readHtml(notifications[i].Status.Content))
 		} else {
-			fmt.Println(notifications[i].Type + " @" + notifications[i].Account.Username)
+			fmt.Println(notifications[i].Type + "@" + notifications[i].Account.Username)
 		}
 	}
 }
 
-func dotoot(c *mastodon.Client) {
+func dotoot(c *mastodon.Client, sensitiveMessage string) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var toot string
 	for scanner.Scan() {
@@ -166,9 +166,10 @@ func dotoot(c *mastodon.Client) {
 		toot += "\n"
 	}
 	_, err := c.PostStatus(context.Background(), &mastodon.Toot{
-		Status:     toot,
-		Visibility: mastodon.VisibilityFollowersOnly,
-		Sensitive:  false,
+		Status:      toot,
+		SpoilerText: sensitiveMessage,
+		Visibility:  mastodon.VisibilityFollowersOnly,
+		Sensitive:   sensitiveMessage != "",
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -189,6 +190,9 @@ func main() {
 	initID := historyCmd.String("initid", "", "Initial ID")
 	userID := historyCmd.String("userid", "", "User ID")
 
+	tootCmd := flag.NewFlagSet("toot", flag.ContinueOnError)
+	tootSensitive := tootCmd.String("sensitive", "", "Call Sensitive (Insert Warn Message)")
+
 	deleteCmd := flag.NewFlagSet("delete", flag.ContinueOnError)
 	deleteID := deleteCmd.String("deleteid", "", "Status to delete")
 
@@ -199,6 +203,8 @@ func main() {
 		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete")
 		fmt.Fprintln(historyCmd.Output(), "command args of history:")
 		historyCmd.PrintDefaults()
+		fmt.Fprintln(historyCmd.Output(), "command args of toot:")
+		tootCmd.PrintDefaults()
 		fmt.Fprintln(historyCmd.Output(), "command args of delete:")
 		deleteCmd.PrintDefaults()
 	}
@@ -230,7 +236,8 @@ func main() {
 		historyCmd.Parse(remainingArgs[1:])
 		dohistory(c, *userID, *initID)
 	case "toot":
-		dotoot(c)
+		tootCmd.Parse(remainingArgs[1:])
+		dotoot(c, *tootSensitive)
 	case "home":
 		doHomeTimeline(c)
 	case "delete":
