@@ -158,7 +158,7 @@ func doHomeTimeline(c *mastodon.Client) {
 	}
 }
 
-func dotoot(c *mastodon.Client, sensitiveMessage string) {
+func dotoot(c *mastodon.Client, sensitiveMessage string, visibility string, replyid mastodon.ID) {
 	scanner := bufio.NewScanner(os.Stdin)
 	var toot string
 	for scanner.Scan() {
@@ -168,7 +168,8 @@ func dotoot(c *mastodon.Client, sensitiveMessage string) {
 	_, err := c.PostStatus(context.Background(), &mastodon.Toot{
 		Status:      toot,
 		SpoilerText: sensitiveMessage,
-		Visibility:  mastodon.VisibilityFollowersOnly,
+		InReplyToID: replyid,
+		Visibility:  visibility,
 		Sensitive:   sensitiveMessage != "",
 	})
 	if err != nil {
@@ -191,7 +192,9 @@ func main() {
 	userID := historyCmd.String("userid", "", "User ID")
 
 	tootCmd := flag.NewFlagSet("toot", flag.ContinueOnError)
+	tootReplyID := tootCmd.String("replyid", "", "Reply to ID")
 	tootSensitive := tootCmd.String("sensitive", "", "Call Sensitive (Insert Warn Message)")
+	tootVisibility := tootCmd.String("visibility", "private", "Visibility private/direct/unlisted/public")
 
 	deleteCmd := flag.NewFlagSet("delete", flag.ContinueOnError)
 	deleteID := deleteCmd.String("deleteid", "", "Status to delete")
@@ -237,7 +240,21 @@ func main() {
 		dohistory(c, *userID, *initID)
 	case "toot":
 		tootCmd.Parse(remainingArgs[1:])
-		dotoot(c, *tootSensitive)
+		/*
+			var visibility mastodon.Visibility
+			switch *tootVisibility {
+			case "direct":
+				visibility = mastodon.VisibilityDirectMessage
+			case "private":
+				visibility = mastodon.VisibilityFollowersOnly
+			case "unlisted":
+				visibility = mastodon.VisibilityUnlisted
+			case "public":
+				visibility = mastodon.VisibilityPublic
+			default:
+				log.Fatal("Unknown visibility: " + *tootVisibility)
+			}*/
+		dotoot(c, *tootSensitive, *tootVisibility, mastodon.ID(*tootReplyID))
 	case "home":
 		doHomeTimeline(c)
 	case "delete":
