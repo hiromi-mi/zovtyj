@@ -124,6 +124,42 @@ func readHtml(content string) string {
 	return b.String()
 }
 
+func doDirectTimeLine(c *mastodon.Client) {
+	convs, err := c.GetConversations(context.Background(), &mastodon.Pagination{
+		//MaxID: "",
+		Limit: 20,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	location, err := time.LoadLocation("Local")
+
+	var crawler func(replyto mastodon.ID)
+	crawler = func(replyto mastodon.ID) {
+		if replyto == "" {
+			return
+		}
+		reply, err := c.GetStatus(context.Background(), replyto)
+		if err != nil {
+			log.Fatal(err)
+		}
+		//fmt.Println(reply)
+		fmt.Println(string(reply.ID) + " " + reply.CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + readHtml(reply.Content) + " @" + reply.Account.Username)
+		if reply.InReplyToID != nil {
+			crawler(mastodon.ID(reply.InReplyToID.(string)))
+		}
+	}
+
+	for i := 0; i < len(convs); i++ {
+		fmt.Println(string(convs[i].LastStatus.ID) + " " + convs[i].LastStatus.CreatedAt.In(location).Format("2006-01-02 15:04:05") + " " + readHtml(convs[i].LastStatus.Content) + " @" + convs[i].LastStatus.Account.Username)
+		if convs[i].LastStatus.InReplyToID != nil {
+			crawler(mastodon.ID(convs[i].LastStatus.InReplyToID.(string)))
+		}
+		fmt.Println("\n")
+	}
+}
+
 func doHomeTimeline(c *mastodon.Client) {
 	timeline, err := c.GetTimelineHome(context.Background(), &mastodon.Pagination{
 		MaxID: "",
@@ -203,7 +239,7 @@ func main() {
 		fmt.Fprintln(historyCmd.Output(), "Usage: zovtyj [global args] <command> [command args]")
 		fmt.Fprintln(historyCmd.Output(), "global args:")
 		flag.PrintDefaults()
-		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete")
+		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete, direct")
 		fmt.Fprintln(historyCmd.Output(), "command args of history:")
 		historyCmd.PrintDefaults()
 		fmt.Fprintln(historyCmd.Output(), "command args of toot:")
@@ -260,6 +296,8 @@ func main() {
 	case "delete":
 		deleteCmd.Parse(remainingArgs[1:])
 		dodelete(c, mastodon.ID(*deleteID))
+	case "direct":
+		doDirectTimeLine(c)
 	default:
 		log.Fatal("Please use cmd: " + flag.Args()[0])
 	}
