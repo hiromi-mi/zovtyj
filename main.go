@@ -178,6 +178,9 @@ func doHomeTimeline(c *mastodon.Client) {
 		fmt.Println(string(timeline[i].ID) + " " + timeline[i].CreatedAt.In(location).Format("2006-01-02 15:04:05") + opts + " " + readHtml(timeline[i].Content) + " @" + timeline[i].Account.Username)
 	}
 
+}
+
+func donotifications(c *mastodon.Client) {
 	notifications, err := c.GetNotifications(context.Background(), &mastodon.Pagination{
 		MaxID: "",
 		Limit: 10,
@@ -239,7 +242,7 @@ func main() {
 		fmt.Fprintln(historyCmd.Output(), "Usage: zovtyj [global args] <command> [command args]")
 		fmt.Fprintln(historyCmd.Output(), "global args:")
 		flag.PrintDefaults()
-		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete, direct")
+		fmt.Fprintln(historyCmd.Output(), "commands: history, home, toot, delete, direct, noti")
 		fmt.Fprintln(historyCmd.Output(), "command args of history:")
 		historyCmd.PrintDefaults()
 		fmt.Fprintln(historyCmd.Output(), "command args of toot:")
@@ -276,20 +279,6 @@ func main() {
 		dohistory(c, *userID, *initID)
 	case "toot":
 		tootCmd.Parse(remainingArgs[1:])
-		/*
-			var visibility mastodon.Visibility
-			switch *tootVisibility {
-			case "direct":
-				visibility = mastodon.VisibilityDirectMessage
-			case "private":
-				visibility = mastodon.VisibilityFollowersOnly
-			case "unlisted":
-				visibility = mastodon.VisibilityUnlisted
-			case "public":
-				visibility = mastodon.VisibilityPublic
-			default:
-				log.Fatal("Unknown visibility: " + *tootVisibility)
-			}*/
 		dotoot(c, *tootSensitive, *tootVisibility, mastodon.ID(*tootReplyID))
 	case "home":
 		doHomeTimeline(c)
@@ -298,6 +287,8 @@ func main() {
 		dodelete(c, mastodon.ID(*deleteID))
 	case "direct":
 		doDirectTimeLine(c)
+	case "noti":
+		donotifications(c)
 	default:
 		log.Fatal("Please use cmd: " + flag.Args()[0])
 	}
