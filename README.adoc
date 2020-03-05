@@ -14,6 +14,9 @@ will get historical toots of User ID: fuga
 ```
 $ echo "toot" | ./zovtyj toot
 ```
+
+* ./zovtyj home
+* ./zovtyj noti
 = Dependencies =
 
 - https://github.com/mattn/go-mastodon : MIT License
