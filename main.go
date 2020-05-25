@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // License: Apache License Version 2.0 (See LICENSE)
 //
 //   Copyright hiromi-mi 2020
