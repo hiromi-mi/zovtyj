@@ -30,6 +30,7 @@ import (
 	"time"
 )
 
+/*
 func doRegister(serverName string) *mastodon.Application {
 	const redirectURI = "urn:ietf:wg:oauth:2.0:oob"
 	app, err := mastodon.RegisterApp(context.Background(), &mastodon.AppConfig{
@@ -63,6 +64,7 @@ func doRegister(serverName string) *mastodon.Application {
 	fmt.Printf("Access Token: %s\n", c.Config.AccessToken)
 	return app
 }
+*/
 
 func dohistory(c *mastodon.Client, userID string, initID string) {
 	var InitialID = mastodon.ID(initID)
@@ -125,6 +127,7 @@ func readHtml(content string) string {
 	return b.String()
 }
 
+/*
 func doDirectTimeLine(c *mastodon.Client) {
 	convs, err := c.GetConversations(context.Background(), &mastodon.Pagination{
 		//MaxID: "",
@@ -160,6 +163,7 @@ func doDirectTimeLine(c *mastodon.Client) {
 		fmt.Println("\n")
 	}
 }
+*/
 
 func doHomeTimeline(c *mastodon.Client) {
 	timeline, err := c.GetTimelineHome(context.Background(), &mastodon.Pagination{
@@ -263,7 +267,7 @@ func main() {
 	remainingArgs := flag.Args()
 
 	if remainingArgs[0] == "register" {
-		doRegister(*serverURL)
+		//doRegister(*serverURL)
 		os.Exit(-1)
 	}
 
@@ -286,8 +290,8 @@ func main() {
 	case "delete":
 		deleteCmd.Parse(remainingArgs[1:])
 		dodelete(c, mastodon.ID(*deleteID))
-	case "direct":
-		doDirectTimeLine(c)
+	//case "direct":
+	//doDirectTimeLine(c)
 	case "noti":
 		donotifications(c)
 	default:
